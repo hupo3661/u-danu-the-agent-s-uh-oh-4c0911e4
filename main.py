@@ -59,16 +59,22 @@ def resolve_output_path() -> Path:
 def write_and_verify(word: str, output_path: Path) -> None:
     """Write the word with no trailing newline, then read it back."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(word, encoding="utf-8")
+    tmp_path = output_path.with_suffix(".tmp")
+    tmp_path.write_text(word, encoding="utf-8")
+    os.replace(tmp_path, output_path)
     if output_path.read_text(encoding="utf-8") != word:
         raise WordError("written entry does not match WORD")
 
 
 def main() -> int:
     """Validate, write, verify, and print the word. Returns exit code."""
-    check_word(WORD)
-    output_path = resolve_output_path()
-    write_and_verify(WORD, output_path)
+    try:
+        check_word(WORD)
+        output_path = resolve_output_path()
+        write_and_verify(WORD, output_path)
+    except WordError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     print(WORD)
     return 0
 
